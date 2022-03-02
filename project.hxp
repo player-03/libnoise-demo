@@ -1,0 +1,32 @@
+import hxp.*;
+import lime.tools.*;
+
+class Project extends HXProject {
+	public function new() {
+		super();
+		
+		meta.title = "libnoise demo";
+		meta.packageName = "com.player03.libnoisedemo";
+		meta.version = "1.0.0";
+		meta.company = "player_03";
+		
+		app.main = "com.player03.libnoisedemo.Main";
+		app.path = "Export";
+		app.file = "libnoisedemo";
+		
+		if(target != HTML5) {
+			window.width = 800;
+			window.height = 800;
+		}
+		window.background = 0x000000;
+		
+		haxelibs.push(new Haxelib("openfl"));
+		haxelibs.push(new Haxelib("openfl-click-group"));
+		haxelibs.push(new Haxelib("libnoise"));
+		haxelibs.push(new Haxelib("feathersui"));
+		
+		sources.push("Source");
+		
+		includeAssets("Assets", "assets");
+	}
+}

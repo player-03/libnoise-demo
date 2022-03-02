@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+	<title>Descriptions</title>
+</head>
+<body>
+	<h1 id="generators">Generators</h1>
+	<dl>
+		<dt>Const</dt>
+		<dd>A solid color.</dd>
+		<dt>Sphere</dt>
+		<dd>A simple repeating gradient. Only a 2D cross-section is shown, but if rendered in 3D, it would appear as a series of concentric spheres around the top-left corner.</dd>
+		<dt>Cylinder</dt>
+		<dd>A simple repeating gradient. Only a 2D cross-section is shown, but if rendered in 3D, it would appear as a series of concentric cylinders around the left edge of the canvas.</dd>
+		<dt>Checker</dt>
+		<dd>Alternating black and white pixels.</dd>
+		
+		<dt>Perlin</dt>
+		<dd>
+			Cloud-like noise often used in CGI and procedural generation.
+			<br /><br />
+			The number in parentheses is the number of octaves (fractal layers). More octaves = more detail = longer calculations.
+		</dd>
+		<dt>RidgedMultifractal</dt>
+		<dd>
+			A light-on-dark variant of Perlin noise.
+			<br /><br />
+			The number in parentheses is the number of octaves (fractal layers). More octaves = more detail = longer calculations.
+		</dd>
+		<dt>Billow</dt>
+		<dd>
+			A dark-on-light variant of Perlin noise.
+			<br /><br />
+			The number in parentheses is the number of octaves (fractal layers). More octaves = more detail = longer calculations.
+		</dd>
+		
+		<dt>Voronoi</dt>
+		<dd>A Voronoi diagram, based on a set of semi-random "seed" points. Each pixel on the canvas is assigned to the nearest seed point, with each group of pixels being called a Voronoi cell.</dd>
+		
+		<dt>Unary</dt>
+		<dd>Sets up for a unary (single-input) operation, allocating a region of the canvas for output. Uses the current pattern (if any) as input.</dd>
+		<dt>Binary</dt>
+		<dd>Sets up for a binary (two-input) operation by splitting the canvas into two parts and allocating a third smaller region for output. Uses the current pattern (if any) as input 1.</dd>
+		<dt>Ternary</dt>
+		<dd>Sets up for a ternary (three-input) operation by splitting the canvas into three parts and allocating a fourth smaller region for output. Uses the current pattern (if any) as input 1.</dd>
+	</dl>
+	
+	<h1 id="unary">Unary operators</h1>
+	<dl>
+		<dt>Abs</dt>
+		<dd>The input pattern's pixels are made positive, turning shadows into highlights.</dd>
+		<dt>Clamp</dt>
+		<dd>The input pattern is clamped to the range [-0.5, 0.5], setting very dark pixels to dark gray and very light pixels to light gray.</dd>
+		<dt>Invert</dt>
+		<dd>The input pattern is inverted.</dd>
+		
+		<dt>Rotate</dt>
+		<dd>The input pattern is rotated 10° clockwise, or 10° around a 3D axis. Rotating in 3D reveals a new cross-section.</dd>
+		<dt>Scale</dt>
+		<dd>The input pattern is zoomed in or out by 33%.</dd>
+		<dt>Translate</dt>
+		<dd>The input pattern is moved 30 pixels diagonally or 60 pixels along the z axis. Translating along the z axis reveals a new cross-section.</dd>
+
+		<dt>Turbulence</dt>
+		<dd>The input pattern's pixels are rearranged over a short distance, creating a hazy glass effect.</dd>
+	</dl>
+	
+	<h1 id="binary">Binary operators</h1>
+	<dl>
+		<dt>Add</dt>
+		<dd>The input patterns are added together. If a pair of pixels would combine to be to darker than black or brighter than white, black or white is used instead.</dd>
+		<dt>Average</dt>
+		<dd>The input patterns are averaged. This is similar to Add, but without the risk of pixels being too dark or too bright.</dd>
+		<dt>Subtract</dt>
+		<dd>The second input pattern is subtracted from the first. If the difference between two pixels would be darker than black or brighter than white, black or white is used instead.</dd>
+		<dt>Multiply</dt>
+		<dd>The input patterns are multiplied together, inverting some pixels (because dark colors are negative) and producing a lot of gray (because gray is 0 and anything times 0 is 0).</dd>
+		<dt>Min</dt>
+		<dd>The input patterns are compared, and the darker of the two pixels is used.</dd>
+		<dt>Max</dt>
+		<dd>The input patterns are compared, and the lighter of the two pixels is used.</dd>
+	</dl>
+	
+	<h1 id="ternary">Ternary operators</h1>
+	<dl>
+		<dt>Select</dt>
+		<dd>
+			The third input pattern is examined to select one of the first two. Wherever the third pattern is dark, the first pattern is shown. Wherever the third pattern is light, the second pattern is shown.
+			<br /><br />
+			"Fuzzy" selection is similar, but acts like the Blend operator wherever the third pattern is nearly gray.
+		</dd>
+		<dt>Blend</dt>
+		<dd>The first two input patterns are combined using a weighted average formula, with the third input pattern determining the weight. The first pattern will be more clearly visible where the third pattern is dark, and the second will be more clearly visible where the third pattern is light.</dd>
+	</dl>
+</body>
+</html>

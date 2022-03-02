@@ -1,0 +1,15 @@
+[
+	{"description":"Minimum of two gradients","pattern":"Min","inputs":[{"pattern":"Billow (2)"},{"pattern":"Cylinder"}]},
+	{"description":"Maximum of two gradients","pattern":"Max","inputs":[{"pattern":"Perlin (8)"},{"pattern":"Cylinder"}]},
+	{"description":"Close-up turbulence","pattern":"Add","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Turbulence (high)","inputs":[{"pattern":"Sphere"}]}]}]}]},{"pattern":"Billow (2)"}]},
+	{"description":"Blending based on Cylinder","pattern":"Blend","inputs":[{"pattern":"Checker"},{"pattern":"RidgedMultifractal (2)"},{"pattern":"Scale up","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Cylinder"}]}]}]}]},
+	{"description":"Selection based on Voronoi regions","pattern":"Select","inputs":[{"pattern":"Sphere"},{"pattern":"RidgedMultifractal (2)"},{"pattern":"Voronoi"}]},
+	{"description":"Turbulent selection","inputs":[{"inputs":[{"pattern":"Checker"},{"pattern":"RidgedMultifractal (2)"},{"pattern":"Voronoi"}],"pattern":"Select"}],"pattern":"Turbulence (high)"},
+	{"description":"Sphere and Cylinder interference pattern","pattern":"Multiply","inputs":[{"pattern":"Scale down","inputs":[{"pattern":"Cylinder"}]},{"pattern":"Scale down","inputs":[{"pattern":"Scale down","inputs":[{"pattern":"Sphere"}]}]}]},
+	{"description":"Difference between octaves","pattern":"Subtract","inputs":[{"pattern":"Scale up","inputs":[{"pattern":"Billow (4)"}]},{"pattern":"Scale up","inputs":[{"pattern":"Billow (2)"}]}]},
+	{"description":"Difference between equal values","pattern":"Subtract","inputs":[{"pattern":"Perlin (2)"},{"pattern":"Perlin (2)"}]},
+	{"description":"Difference between near-equal values","pattern":"Subtract","inputs":[{"pattern":"RidgedMultifractal (2)"},{"pattern":"Invert","inputs":[{"pattern":"Billow (2)"}]}]},
+	{"description":"Multiplying Voronoi regions","pattern":"Multiply","inputs":[{"pattern":"Voronoi"},{"pattern":"Cylinder"}]},
+	{"description":"Billow squared","pattern":"Multiply","inputs":[{"pattern":"Billow (2)"},{"pattern":"Billow (2)"}]},
+	{"description":"RidgedMultifractal cubed","pattern":"Multiply","inputs":[{"pattern":"Multiply","inputs":[{"pattern":"RidgedMultifractal (4)"},{"pattern":"RidgedMultifractal (4)"}]},{"pattern":"RidgedMultifractal (4)"}]}
+]
