@@ -7,6 +7,7 @@ import lime.app.Event;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 import openfl.utils.ByteArray;
+import sys.thread.Thread;
 
 class CanvasSection {
 	public var canvas(default, set):BitmapData;
@@ -179,9 +180,9 @@ class CanvasSection {
 			toolTip = "Working...";
 			
 			if(fullscreen) {
-				generatePattern(new IntRectangle(0, 0, canvas.width, canvas.height));
+				Thread.create(generatePattern.bind(new IntRectangle(0, 0, canvas.width, canvas.height)));
 			} else {
-				generatePattern(workArea.clone());
+				Thread.create(generatePattern.bind(workArea.clone()));
 			}
 		}
 		
