@@ -43,6 +43,8 @@ class CanvasSection {
 	 */
 	public var readyToDraw(get, never):Bool;
 	
+	private var workThread:Thread;
+	
 	public var childCount(get, never):Int;
 	private var children:Array<CanvasSection> = [];
 	
@@ -180,9 +182,9 @@ class CanvasSection {
 			toolTip = "Working...";
 			
 			if(fullscreen) {
-				Thread.create(generatePattern.bind(new IntRectangle(0, 0, canvas.width, canvas.height)));
+				workThread = Thread.create(generatePattern.bind(module, new IntRectangle(0, 0, canvas.width, canvas.height)));
 			} else {
-				Thread.create(generatePattern.bind(workArea.clone()));
+				workThread = Thread.create(generatePattern.bind(module, workArea.clone()));
 			}
 		}
 		
@@ -195,7 +197,7 @@ class CanvasSection {
 	/**
 	 * Draws the active pattern to the canvas.
 	 */
-	private function generatePattern(workArea:IntRectangle):Void {
+	private function generatePattern(module:ModuleBase, workArea:IntRectangle):Void {
 		if(module == null || workArea.width <= 0 || workArea.height <= 0) {
 			toolTip = null;
 			return;
@@ -222,6 +224,12 @@ class CanvasSection {
 				//Store it as a color.
 				bytes.writeInt(value << 16 | value << 8 | value);
 			}
+		}
+		
+		//If another thread was created after this one, don't draw anything.
+		if(Thread.current() != workThread) {
+			bytes.clear();
+			return;
 		}
 		
 		if(!pattern.hasSpecialMeaning) {
