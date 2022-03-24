@@ -65,6 +65,10 @@ class PatternDropdown extends PopUpListView {
 			var persistence:Float = 0.5;
 			var seed:Int = Std.int(Math.random() * 0x7FFFFFFF);
 			var quality:QualityMode = HIGH;
+			#if html5
+			//Enum values contain a field that can't be passed to web workers.
+			Reflect.deleteField(quality, "toString");
+			#end
 			
 			patterns = [
 				//Zero inputs.

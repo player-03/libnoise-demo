@@ -10,6 +10,7 @@ import feathers.core.ToolTipManager;
 import feathers.layout.AnchorLayout;
 import feathers.layout.AnchorLayoutData;
 import haxe.Json;
+import lime.app.Future.FutureWork;
 import openfl.Assets;
 import openfl.display.Bitmap;
 import openfl.display.InteractiveObject;
@@ -110,6 +111,9 @@ class Main extends LayoutGroup {
 		super();
 		
 		MainAPI.main = this;
+		
+		FutureWork.minThreads = 1;
+		FutureWork.maxThreads = 2;
 		
 		layout = new AnchorLayout();
 		

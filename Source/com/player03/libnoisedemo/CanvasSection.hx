@@ -4,10 +4,10 @@ import com.player03.libnoisedemo.PatternDropdown;
 import haxe.Timer;
 import libnoise.ModuleBase;
 import lime.app.Event;
+import lime.app.Future;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
 import openfl.utils.ByteArray;
-import sys.thread.Thread;
 
 class CanvasSection {
 	public var canvas(default, set):BitmapData;
@@ -43,7 +43,7 @@ class CanvasSection {
 	 */
 	public var readyToDraw(get, never):Bool;
 	
-	private var workThread:Thread;
+	private var future:Future<Pixels>;
 	
 	public var childCount(get, never):Int;
 	private var children:Array<CanvasSection> = [];
@@ -182,10 +182,12 @@ class CanvasSection {
 			toolTip = "Working...";
 			
 			if(fullscreen) {
-				workThread = Thread.create(generatePattern.bind(module, new IntRectangle(0, 0, canvas.width, canvas.height)));
+				future = Future.withEventualValue(generatePattern, { module: module, workArea: new IntRectangle(0, 0, canvas.width, canvas.height) }, MULTI_THREADED);
 			} else {
-				workThread = Thread.create(generatePattern.bind(module, workArea.clone()));
+				future = Future.withEventualValue(generatePattern, { module: module, workArea: workArea.clone() }, MULTI_THREADED);
 			}
+			
+			future.onComplete(onWorkComplete.bind(future));
 		}
 		
 		if(parent != null && refillParents) {
@@ -197,10 +199,11 @@ class CanvasSection {
 	/**
 	 * Draws the active pattern to the canvas.
 	 */
-	private function generatePattern(module:ModuleBase, workArea:IntRectangle):Void {
+	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle }):Pixels {
+		var module:ModuleBase = state.module;
+		var workArea:IntRectangle = state.workArea;
 		if(module == null || workArea.width <= 0 || workArea.height <= 0) {
-			toolTip = null;
-			return;
+			return { toolTip: null, workArea: workArea };
 		}
 		
 		var workStartTime:Float = Timer.stamp();
@@ -226,22 +229,28 @@ class CanvasSection {
 			}
 		}
 		
-		//If another thread was created after this one, don't draw anything.
-		if(Thread.current() != workThread) {
-			bytes.clear();
+		return {
+			toolTip: "Calculation time: " + (Math.round((Timer.stamp() - workStartTime) * 1000) / 1000) + "s",
+			bytes: bytes,
+			workArea: workArea
+		};
+	}
+	
+	private function onWorkComplete(expectedFuture:Future<Pixels>, results:Pixels):Void {
+		if(future != expectedFuture || results.bytes == null) {
 			return;
 		}
 		
 		if(!pattern.hasSpecialMeaning) {
-			toolTip = "Calculation time: " + (Math.round((Timer.stamp() - workStartTime) * 1000) / 1000) + "s";
+			toolTip = results.toolTip;
 		} else {
 			toolTip = null;
 		}
 		
 		//Draw the pixels to the canvas.
-		bytes.position = 0;
-		canvas.setPixels(workArea.toFloatRectangle(), bytes);
-		bytes.clear();
+		results.bytes.position = 0;
+		canvas.setPixels(results.workArea.toFloatRectangle(), results.bytes);
+		results.bytes.clear();
 		
 		onRedraw.dispatch();
 	}
@@ -552,4 +561,10 @@ typedef SectionDescription = {
 	@:optional var description:String;
 	var pattern:String;
 	@:optional var inputs:Array<SectionDescription>;
+};
+
+typedef Pixels = {
+	var toolTip:String;
+	@:optional var bytes:ByteArray;
+	var workArea:IntRectangle;
 };
