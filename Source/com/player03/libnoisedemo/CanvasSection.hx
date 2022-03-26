@@ -14,7 +14,7 @@ class CanvasSection {
 	private static var threadPool:ThreadPool;
 	private static function initThreadPool():Void {
 		if(threadPool == null) {
-			threadPool = new ThreadPool(1, 1, MULTI_THREADED);
+			threadPool = new ThreadPool(1, 1, SINGLE_THREADED, 3/4);
 		}
 	}
 	
@@ -214,7 +214,7 @@ class CanvasSection {
 	/**
 	 * Draws the active pattern to the canvas.
 	 */
-	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle }, output:WorkOutput):Void {
+	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle, ?y:Int, ?bytes:ByteArray }, output:WorkOutput):Void {
 		var module:ModuleBase = state.module;
 		var workArea:IntRectangle = state.workArea;
 		if(module == null) {
@@ -225,11 +225,21 @@ class CanvasSection {
 			return;
 		}
 		
-		//Allocate four bytes per pixel.
-		var bytes:ByteArray = new ByteArray(workArea.width * workArea.height);
+		var bytes:ByteArray = state.bytes;
+		if(bytes == null) {
+			//Allocate four bytes per pixel.
+			state.bytes = bytes = new ByteArray(workArea.width * workArea.height);
+			
+			state.y = workArea.top;
+		}
+		
+		var endY:Int = state.y + 5;
+		if(endY > workArea.bottom) {
+			endY = workArea.bottom;
+		}
 		
 		//Run `getValue()` for every pixel.
-		for(y in workArea.top...workArea.bottom) {
+		for(y in state.y...endY) {
 			for(x in workArea.left...workArea.right) {
 				//`getValue()` returns a value in the range [-1, 1], and we need
 				//to convert to [0, 255].
@@ -246,7 +256,11 @@ class CanvasSection {
 			}
 		}
 		
-		output.sendComplete(bytes, [bytes]);
+		state.y = endY;
+		
+		if(state.y >= workArea.bottom) {
+			output.sendComplete(bytes, [bytes]);
+		}
 	}
 	
 	private function onWorkComplete(bytes:ByteArray):Void {
