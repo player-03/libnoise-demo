@@ -1,15 +1,23 @@
 package com.player03.libnoisedemo;
 
 import com.player03.libnoisedemo.PatternDropdown;
-import haxe.Timer;
 import libnoise.ModuleBase;
 import lime.app.Event;
-import lime.app.Future;
+import lime.system.ThreadPool;
+import lime.system.WorkOutput;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
+import openfl.geom.Rectangle;
 import openfl.utils.ByteArray;
 
 class CanvasSection {
+	private static var threadPool:ThreadPool;
+	private static function initThreadPool():Void {
+		if(threadPool == null) {
+			threadPool = new ThreadPool(1, 1, MULTI_THREADED);
+		}
+	}
+	
 	public var canvas(default, set):BitmapData;
 	
 	/**
@@ -43,7 +51,7 @@ class CanvasSection {
 	 */
 	public var readyToDraw(get, never):Bool;
 	
-	private var future:Future<Pixels>;
+	private var jobID:Null<Int> = null;
 	
 	public var childCount(get, never):Int;
 	private var children:Array<CanvasSection> = [];
@@ -62,6 +70,11 @@ class CanvasSection {
 		this.area = area;
 		workArea = area.clone();
 		this.parent = parent;
+		
+		initThreadPool();
+		
+		threadPool.onComplete.add(onWorkComplete);
+		threadPool.onError.add(onWorkError);
 	}
 	
 	private function resetPattern():Void {
@@ -181,13 +194,15 @@ class CanvasSection {
 		if(!skipDrawStep) {
 			toolTip = "Working...";
 			
-			if(fullscreen) {
-				future = Future.withEventualValue(generatePattern, { module: module, workArea: new IntRectangle(0, 0, canvas.width, canvas.height) }, MULTI_THREADED);
-			} else {
-				future = Future.withEventualValue(generatePattern, { module: module, workArea: workArea.clone() }, MULTI_THREADED);
+			if(jobID != null) {
+				threadPool.cancelJob(jobID);
 			}
 			
-			future.onComplete(onWorkComplete.bind(future));
+			if(fullscreen) {
+				jobID = threadPool.run(generatePattern, { module: module, workArea: new IntRectangle(0, 0, canvas.width, canvas.height) });
+			} else {
+				jobID = threadPool.run(generatePattern, { module: module, workArea: workArea.clone() });
+			}
 		}
 		
 		if(parent != null && refillParents) {
@@ -199,14 +214,16 @@ class CanvasSection {
 	/**
 	 * Draws the active pattern to the canvas.
 	 */
-	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle }):Pixels {
+	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle }, output:WorkOutput):Void {
 		var module:ModuleBase = state.module;
 		var workArea:IntRectangle = state.workArea;
-		if(module == null || workArea.width <= 0 || workArea.height <= 0) {
-			return { toolTip: null, workArea: workArea };
+		if(module == null) {
+			output.sendError("Not a valid pattern.");
+			return;
+		} else if(workArea.width <= 0 || workArea.height <= 0) {
+			output.sendError("Canvas section is too small.");
+			return;
 		}
-		
-		var workStartTime:Float = Timer.stamp();
 		
 		//Allocate four bytes per pixel.
 		var bytes:ByteArray = new ByteArray(workArea.width * workArea.height);
@@ -229,30 +246,38 @@ class CanvasSection {
 			}
 		}
 		
-		return {
-			toolTip: "Calculation time: " + (Math.round((Timer.stamp() - workStartTime) * 1000) / 1000) + "s",
-			bytes: bytes,
-			workArea: workArea
-		};
+		output.sendComplete(bytes, [bytes]);
 	}
 	
-	private function onWorkComplete(expectedFuture:Future<Pixels>, results:Pixels):Void {
-		if(future != expectedFuture || results.bytes == null) {
+	private function onWorkComplete(bytes:ByteArray):Void {
+		if(threadPool.activeJob.id != jobID) {
 			return;
 		}
 		
 		if(!pattern.hasSpecialMeaning) {
-			toolTip = results.toolTip;
+			toolTip = "Calculation time: " + (Math.round(threadPool.activeJob.duration * 1000) / 1000) + "s";
 		} else {
 			toolTip = null;
 		}
 		
 		//Draw the pixels to the canvas.
-		results.bytes.position = 0;
-		canvas.setPixels(results.workArea.toFloatRectangle(), results.bytes);
-		results.bytes.clear();
+		bytes.position = 0;
+		canvas.setPixels(fullscreen ? new Rectangle(0, 0, canvas.width, canvas.height) : workArea.toFloatRectangle(), bytes);
+		bytes.clear();
 		
 		onRedraw.dispatch();
+		
+		jobID = null;
+	}
+	
+	private function onWorkError(error:String):Void {
+		if(threadPool.activeJob.id != jobID) {
+			return;
+		}
+		
+		toolTip = error;
+		
+		jobID = null;
 	}
 	
 	/**
@@ -261,6 +286,9 @@ class CanvasSection {
 	public function clear():Void {
 		for(child in children) {
 			child.clear();
+			
+			threadPool.onComplete.remove(child.onWorkComplete);
+			threadPool.onError.remove(child.onWorkError);
 		}
 		
 		children.resize(0);
@@ -561,10 +589,4 @@ typedef SectionDescription = {
 	@:optional var description:String;
 	var pattern:String;
 	@:optional var inputs:Array<SectionDescription>;
-};
-
-typedef Pixels = {
-	var toolTip:String;
-	@:optional var bytes:ByteArray;
-	var workArea:IntRectangle;
 };

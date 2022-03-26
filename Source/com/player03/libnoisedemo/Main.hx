@@ -112,9 +112,6 @@ class Main extends LayoutGroup {
 		
 		MainAPI.main = this;
 		
-		FutureWork.minThreads = 1;
-		FutureWork.maxThreads = 2;
-		
 		layout = new AnchorLayout();
 		
 		resizeCanvasButton = new Button();
