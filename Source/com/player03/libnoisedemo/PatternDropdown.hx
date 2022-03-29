@@ -134,6 +134,16 @@ class PatternDropdown extends PopUpListView {
 		return [for(i in 0...4) new PatternDropdown(i, allowSubdividing, patterns[i], descriptions)];
 	}
 	
+	/**
+	 * Sets the cache region for all zero-input patterns.
+	 * @see `libnoise.ModuleBase.cache()`
+	 */
+	public static function cache(xMin:Float, yMin:Float, zMin:Float, xMax:Float, yMax:Float, zMax:Float) {
+		for(pattern in patterns[0]) {
+			pattern.getModule().cache(xMin, yMin, zMin, xMax, yMax, zMax);
+		}
+	}
+	
 	private var group:ClickGroup;
 	
 	public var inputsExpected(default, null):Int;

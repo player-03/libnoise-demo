@@ -129,6 +129,8 @@ class Main extends LayoutGroup {
 		ToolTipManager.toolTipManagerFactory = CustomToolTipManager.new;
 		toolTips = cast(ToolTipManager.addRoot(stage), CustomToolTipManager);
 		
+		PatternDropdown.cache(0, 0, 0, canvas.bitmapData.width, canvas.bitmapData.height, 0);
+		
 		ui = new SectionUI();
 		addChild(ui);
 		
