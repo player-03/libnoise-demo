@@ -7,7 +7,6 @@ import lime.system.ThreadPool;
 import lime.system.WorkOutput;
 import openfl.display.Bitmap;
 import openfl.display.BitmapData;
-import openfl.geom.Rectangle;
 import openfl.utils.ByteArray;
 
 class CanvasSection {
@@ -74,6 +73,7 @@ class CanvasSection {
 		initThreadPool();
 		
 		threadPool.onComplete.add(onWorkComplete);
+		threadPool.onProgress.add(onWorkProgress);
 		threadPool.onError.add(onWorkError);
 	}
 	
@@ -214,7 +214,7 @@ class CanvasSection {
 	/**
 	 * Draws the active pattern to the canvas.
 	 */
-	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle, ?y:Int, ?bytes:ByteArray }, output:WorkOutput):Void {
+	private static function generatePattern(state: { module:ModuleBase, workArea:IntRectangle, ?y:Int, ?bytes:ByteArray, ?workSubArea:IntRectangle }, output:WorkOutput):Void {
 		var module:ModuleBase = state.module;
 		var workArea:IntRectangle = state.workArea;
 		if(module == null) {
@@ -225,17 +225,28 @@ class CanvasSection {
 			return;
 		}
 		
-		var bytes:ByteArray = state.bytes;
-		if(bytes == null) {
-			//Allocate four bytes per pixel.
-			state.bytes = bytes = new ByteArray(workArea.width * workArea.height);
-			
+		if(state.y == null) {
 			state.y = workArea.top;
 		}
 		
+		var workSubArea:IntRectangle = state.workSubArea;
+		var bytes:ByteArray = state.bytes;
+		if(bytes == null) {
+			//Determine how many pixels to fill in the next progress update.
+			state.workSubArea = workSubArea = workArea.clone();
+			workSubArea.y = state.y;
+			workSubArea.height = 50;
+			if(workSubArea.bottom > workArea.bottom) {
+				workSubArea.bottom = workArea.bottom;
+			}
+			
+			//Allocate four bytes per pixel.
+			state.bytes = bytes = new ByteArray(workSubArea.width * workSubArea.height);
+		}
+		
 		var endY:Int = state.y + 5;
-		if(endY > workArea.bottom) {
-			endY = workArea.bottom;
+		if(endY > workSubArea.bottom) {
+			endY = workSubArea.bottom;
 		}
 		
 		//Run `getValue()` for every pixel.
@@ -258,12 +269,18 @@ class CanvasSection {
 		
 		state.y = endY;
 		
+		if(state.y >= workSubArea.bottom) {
+			output.sendProgress({ bytes: bytes, workArea: workSubArea }, [bytes]);
+			state.bytes = null;
+			state.workSubArea = null;
+		}
+		
 		if(state.y >= workArea.bottom) {
-			output.sendComplete(bytes, [bytes]);
+			output.sendComplete();
 		}
 	}
 	
-	private function onWorkComplete(bytes:ByteArray):Void {
+	private function onWorkComplete(_):Void {
 		if(threadPool.activeJob.id != jobID) {
 			return;
 		}
@@ -274,14 +291,20 @@ class CanvasSection {
 			toolTip = null;
 		}
 		
-		//Draw the pixels to the canvas.
-		bytes.position = 0;
-		canvas.setPixels(fullscreen ? new Rectangle(0, 0, canvas.width, canvas.height) : workArea.toFloatRectangle(), bytes);
-		bytes.clear();
-		
 		onRedraw.dispatch();
 		
 		jobID = null;
+	}
+	
+	private function onWorkProgress(data: { bytes:ByteArray, workArea:IntRectangle }):Void {
+		if(threadPool.activeJob.id != jobID) {
+			return;
+		}
+		
+		//Draw the pixels to the canvas.
+		data.bytes.position = 0;
+		canvas.setPixels(data.workArea.toFloatRectangle(), data.bytes);
+		data.bytes.clear();
 	}
 	
 	private function onWorkError(error:String):Void {
@@ -302,6 +325,7 @@ class CanvasSection {
 			child.clear();
 			
 			threadPool.onComplete.remove(child.onWorkComplete);
+			threadPool.onProgress.remove(child.onWorkProgress);
 			threadPool.onError.remove(child.onWorkError);
 		}
 		
