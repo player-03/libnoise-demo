@@ -13,7 +13,7 @@ class CanvasSection {
 	private static var threadPool:ThreadPool;
 	private static function initThreadPool():Void {
 		if(threadPool == null) {
-			threadPool = new ThreadPool(1, 1, SINGLE_THREADED, 3/4);
+			threadPool = new ThreadPool(2, 3, MULTI_THREADED);
 		}
 	}
 	
@@ -244,7 +244,7 @@ class CanvasSection {
 			state.bytes = bytes = new ByteArray(workSubArea.width * workSubArea.height);
 		}
 		
-		var endY:Int = state.y + 5;
+		var endY:Int = state.y + (output.mode == MULTI_THREADED ? 50 : 5);
 		if(endY > workSubArea.bottom) {
 			endY = workSubArea.bottom;
 		}
