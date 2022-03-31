@@ -10,10 +10,8 @@ import feathers.core.ToolTipManager;
 import feathers.layout.AnchorLayout;
 import feathers.layout.AnchorLayoutData;
 import haxe.Json;
-import lime.app.Future.FutureWork;
 import openfl.Assets;
 import openfl.display.Bitmap;
-import openfl.display.InteractiveObject;
 import openfl.events.Event;
 import openfl.events.KeyboardEvent;
 import openfl.events.MouseEvent;
@@ -39,7 +37,7 @@ class MainAPI {
 		
 		main.load(main.canvasRoot, pattern, fullscreen);
 	}
-	public static var savePattern:String -> Void;
+	public static var onPatternChange(default, null) = new lime.app.Event<String -> Void>();
 	
 	public static function setEditingProhibited(prohibited:Bool):Void {
 		if(main == null) {
@@ -125,6 +123,7 @@ class Main extends LayoutGroup {
 		canvas = new Bitmap();
 		addChild(canvas);
 		canvasRoot = new RootCanvasSection(canvas, stage.stageWidth, stage.stageHeight);
+		canvasRoot.onRedraw.add(onRootRedraw);
 		
 		ToolTipManager.toolTipManagerFactory = CustomToolTipManager.new;
 		toolTips = cast(ToolTipManager.addRoot(stage), CustomToolTipManager);
@@ -221,10 +220,6 @@ class Main extends LayoutGroup {
 				textInput.selectAll();
 				ignoreEvents = false;
 				
-				if(MainAPI.savePattern != null) {
-					MainAPI.savePattern(textInput.text);
-				}
-				
 				lastSavedSection = ui.section;
 			}
 		} else if(e.ctrlKey && e.keyCode == Keyboard.C && ui.section != null) {
@@ -233,6 +228,12 @@ class Main extends LayoutGroup {
 			} else {
 				TextCallout.show("Copied this section.", ui.dropdown);
 			}
+		}
+	}
+	
+	private function onRootRedraw():Void {
+		if(!canvasRoot.pattern.hasSpecialMeaning) {
+			MainAPI.onPatternChange.dispatch(Json.stringify(canvasRoot.save()));
 		}
 	}
 	
