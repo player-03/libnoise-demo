@@ -242,12 +242,7 @@ class Main extends LayoutGroup {
 			return;
 		}
 		
-		var text:String = textInput.text;
-		if(text.startsWith("{")) {
-			text = text.replace("“", '"').replace("”", '"');
-		}
-		
-		load(ui.section != null ? ui.section : canvasRoot, text);
+		load(ui.section != null ? ui.section : canvasRoot, textInput.text);
 	}
 	
 	private function checkResizeNeeded(e:Event):Void {
@@ -278,7 +273,8 @@ class Main extends LayoutGroup {
 			fullscreen = section.fullscreen;
 		}
 		
-		if(StringTools.startsWith(text, "{")) {
+		if(text.startsWith("{")) {
+			text = text.replace("“", '"').replace("”", '"');
 			try {
 				section.load(Json.parse(text), ui.getPattern, fullscreen);
 				
