@@ -186,7 +186,7 @@ class PatternDropdown extends PopUpListView {
 		
 		buttonFactory = DisplayObjectFactory.withFunction(makeButton);
 		
-		listViewFactory = DisplayObjectFactory.withFunction(makeListView, destroyListView);
+		listViewFactory = DisplayObjectFactory.withFunction(makeListView, destroyListView2);
 		itemRendererRecycler.update = updateItem;
 	}
 	
@@ -203,7 +203,7 @@ class PatternDropdown extends PopUpListView {
 		return listView;
 	}
 	
-	private function destroyListView(listView:ListView):Void {
+	private function destroyListView2(listView:ListView):Void {
 		listView.removeEventListener(MouseEvent.MOUSE_WHEEL, onListViewMouseWheel, true);
 		group.remove(listView);
 	}
