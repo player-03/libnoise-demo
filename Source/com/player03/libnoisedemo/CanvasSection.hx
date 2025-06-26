@@ -43,7 +43,14 @@ class CanvasSection {
 	 * work is already done. Automatically becomes null when `pattern` changes.
 	 */
 	private var module:Null<ModuleBase> = null;
+	#if libnoise_demo_debug_info
+	public var toolTip(default, set):Null<String> = null;
+	private inline function set_toolTip(value:Null<String>):Null<String> {
+		return toolTip = value == null ? null : value + "\njob #" + jobID;
+	}
+	#else
 	public var toolTip(default, null):Null<String> = null;
+	#end
 	/**
 	 * Whether this section has a drawable pattern and all required inputs are
 	 * available.
@@ -192,8 +199,6 @@ class CanvasSection {
 		saved = null;
 		
 		if(!skipDrawStep) {
-			toolTip = "Working...";
-			
 			if(jobID != null) {
 				threadPool.cancelJob(jobID);
 			}
@@ -203,6 +208,8 @@ class CanvasSection {
 			} else {
 				jobID = threadPool.run(generatePattern, { module: module, workArea: workArea.clone() });
 			}
+			
+			toolTip = "Working...";
 		}
 		
 		if(parent != null && refillParents) {
@@ -307,12 +314,16 @@ class CanvasSection {
 		data.bytes.clear();
 	}
 	
-	private function onWorkError(error:String):Void {
+	private function onWorkError(error:Dynamic):Void {
 		if(threadPool.activeJob.id != jobID) {
 			return;
 		}
 		
-		toolTip = error;
+		if(error is haxe.Exception) {
+			toolTip = error.message;
+		} else {
+			toolTip = Std.string(error);
+		}
 		
 		jobID = null;
 	}
