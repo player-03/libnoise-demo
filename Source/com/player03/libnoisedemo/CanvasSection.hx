@@ -329,6 +329,19 @@ class CanvasSection {
 	}
 	
 	/**
+	 * Cancels ongoing work in this section, leaving the canvas as-is.
+	 */
+	public function cancel():Void {
+		for(child in children) {
+			child.cancel();
+		}
+		
+		if(jobID != null && threadPool.cancelJob(jobID)) {
+			toolTip = "Canceled";
+		}
+	}
+	
+	/**
 	 * Clears the section, but doesn't immediately refill.
 	 */
 	public function clear():Void {

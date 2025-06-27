@@ -228,6 +228,8 @@ class Main extends LayoutGroup {
 			} else {
 				TextCallout.show("Copied this section.", ui.dropdown);
 			}
+		} else if(e.keyCode == Keyboard.ESCAPE) {
+			canvasRoot.cancel();
 		}
 	}
 	
